@@ -37,22 +37,25 @@ This is the same way any API integration handles credentials. Your keys stay on 
 
 ## Installation
 
-### Step 1: Clone and install dependencies
+### Option A: Install from PyPI (recommended)
+
+```bash
+pip install snaptrade-mcp
+```
+
+That's it. This installs the `snaptrade-mcp` command and all dependencies.
+
+### Option B: Install from source
 
 ```bash
 git clone https://github.com/micah63/snaptrade-mcp-server.git
 cd snaptrade-mcp-server
-
-python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r snaptrade-mcp/requirements.txt
+pip install .
 ```
 
-### Step 2: Add the MCP server to your AI client
+## Add the MCP server to your AI client
 
-**Important:** Use the full absolute path to the venv's Python so the server can find its dependencies. Replace `/path/to/snaptrade-mcp-server` with the actual path where you cloned the repo.
-
-#### Claude Code
+### Claude Code
 
 The `-s user` flag stores your credentials in your personal Claude config (`~/.claude/`), not in the project — so they never end up in git.
 
@@ -60,13 +63,12 @@ The `-s user` flag stores your credentials in your personal Claude config (`~/.c
 claude mcp add snaptrade -s user \
   -e SNAPTRADE_CLIENT_ID=your_client_id \
   -e SNAPTRADE_CONSUMER_KEY=your_consumer_key \
-  -- /path/to/snaptrade-mcp-server/.venv/bin/python \
-     /path/to/snaptrade-mcp-server/snaptrade-mcp/server.py
+  -- snaptrade-mcp
 ```
 
 Then restart Claude Code and run `/mcp` to verify the server appears with all 10 tools.
 
-**Alternative:** If you prefer to set credentials as environment variables in your shell (add to `~/.zshrc` or `~/.bashrc`), you can skip the `-e` flags entirely:
+**Alternative:** If you prefer to set credentials as environment variables in your shell (add to `~/.zshrc` or `~/.bashrc`), you can skip the `-e` flags:
 
 ```bash
 # In your ~/.zshrc or ~/.bashrc:
@@ -74,12 +76,10 @@ export SNAPTRADE_CLIENT_ID="your_client_id"
 export SNAPTRADE_CONSUMER_KEY="your_consumer_key"
 
 # Then register without -e flags:
-claude mcp add snaptrade -s user \
-  -- /path/to/snaptrade-mcp-server/.venv/bin/python \
-     /path/to/snaptrade-mcp-server/snaptrade-mcp/server.py
+claude mcp add snaptrade -s user -- snaptrade-mcp
 ```
 
-#### Claude Desktop
+### Claude Desktop
 
 Add to your `claude_desktop_config.json` (Settings > Developer > Edit Config). This file lives in your user directory and is not part of any project.
 
@@ -87,8 +87,7 @@ Add to your `claude_desktop_config.json` (Settings > Developer > Edit Config). T
 {
   "mcpServers": {
     "snaptrade": {
-      "command": "/path/to/snaptrade-mcp-server/.venv/bin/python",
-      "args": ["/path/to/snaptrade-mcp-server/snaptrade-mcp/server.py"],
+      "command": "snaptrade-mcp",
       "env": {
         "SNAPTRADE_CLIENT_ID": "your_client_id",
         "SNAPTRADE_CONSUMER_KEY": "your_consumer_key"
@@ -100,7 +99,7 @@ Add to your `claude_desktop_config.json` (Settings > Developer > Edit Config). T
 
 Restart Claude Desktop. The SnapTrade tools will appear in the tools menu.
 
-#### Cursor
+### Cursor
 
 Add to `.cursor/mcp.json` in your project root. **Add `.cursor/mcp.json` to your `.gitignore`** so credentials don't get committed.
 
@@ -108,8 +107,7 @@ Add to `.cursor/mcp.json` in your project root. **Add `.cursor/mcp.json` to your
 {
   "mcpServers": {
     "snaptrade": {
-      "command": "/path/to/snaptrade-mcp-server/.venv/bin/python",
-      "args": ["/path/to/snaptrade-mcp-server/snaptrade-mcp/server.py"],
+      "command": "snaptrade-mcp",
       "env": {
         "SNAPTRADE_CLIENT_ID": "your_client_id",
         "SNAPTRADE_CONSUMER_KEY": "your_consumer_key"
@@ -140,8 +138,8 @@ This calls `snaptrade_setup`, which opens a browser window where you authorize y
 ## Troubleshooting
 
 **Server fails to connect / "Failed to reconnect"**
-- Make sure you're using the absolute path to the venv's Python, not just `python`. The server needs `mcp[cli]` and `snaptrade-python-sdk` installed, and bare `python` won't find them.
-- Verify deps are installed: `.venv/bin/python -c "from snaptrade_client import SnapTrade; from mcp.server.fastmcp import FastMCP; print('OK')"`
+- Verify the package is installed: `python -c "from snaptrade_mcp.server import main; print('OK')"`
+- If using a virtual environment, make sure `snaptrade-mcp` is installed in that environment.
 
 **"Missing credentials" error**
 - Check that `SNAPTRADE_CLIENT_ID` and `SNAPTRADE_CONSUMER_KEY` are set in the `-e` flags (Claude Code) or `env` block (Claude Desktop / Cursor).
@@ -158,10 +156,10 @@ This calls `snaptrade_setup`, which opens a browser window where you authorize y
 ## Architecture
 
 ```
-snaptrade-mcp/
+snaptrade_mcp/
   server.py         # All 10 tools, 2 resources, 2 prompt templates
-  __init__.py       # Package marker
-  __main__.py       # Entry point
+  __init__.py       # Package marker + version
+  __main__.py       # Entry point (python -m snaptrade_mcp)
   requirements.txt  # Dependencies
   README.md         # This file
 ```

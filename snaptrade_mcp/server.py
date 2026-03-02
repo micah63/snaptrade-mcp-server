@@ -456,5 +456,10 @@ def account_summary() -> str:
     )
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the snaptrade-mcp console script."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
